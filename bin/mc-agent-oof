@@ -35,12 +35,15 @@ EXIT=$?
 STDERR_TAIL="$(tail -c 4096 "$STDERR_FILE" 2>/dev/null || true)"
 
 if command -v python3 >/dev/null 2>&1 && [ -f "$SCRIPT" ]; then
+  # Run synchronously so the state file is written before we return — otherwise
+  # back-to-back invocations can race. Audio playback is already detached
+  # internally by mc_agent_oof.py, so this still returns in milliseconds.
   python3 "$SCRIPT" \
     --exit-code "$EXIT" \
     --command "$*" \
     --stderr-tail "$STDERR_TAIL" \
     --cwd "$PWD" \
-    >/dev/null 2>&1 &
+    >/dev/null 2>&1
 fi
 
 exit "$EXIT"
