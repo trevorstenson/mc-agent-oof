@@ -1,6 +1,6 @@
 # mc-agent-oof
 
-Minecraft hurt sounds when your build, lint, or test fails — automatically, no agent cooperation needed.
+Minecraft hurt sounds when your build, lint, or test fails — automatically — fires on every Bash tool call without prompting the agent.
 
 ## What it does
 
