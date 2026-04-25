@@ -1,0 +1,16 @@
+{
+  "name": "mc-agent-oof",
+  "owner": {
+    "name": "trevorstenson"
+  },
+  "metadata": {
+    "description": "mc-agent-oof Cursor plugin marketplace"
+  },
+  "plugins": [
+    {
+      "name": "mc-agent-oof",
+      "source": "plugins/mc-agent-oof",
+      "description": "Minecraft hurt sounds when your build, lint, or test fails."
+    }
+  ]
+}

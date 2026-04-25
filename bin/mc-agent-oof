@@ -1,0 +1,46 @@
+#!/usr/bin/env bash
+# mc-agent-oof: run a command, react with a Minecraft sound based on its outcome.
+#
+#   mc-agent-oof npm test
+#   mc-agent-oof cargo build --release
+#   mc-agent-oof sh -c './configure && make'
+#
+# Quiet on success unless the previous run of the same command failed (then
+# levelup). Plays hurt/explode/anvil on failure depending on exit code + stderr.
+
+set -u
+
+if [ $# -eq 0 ]; then
+  echo "usage: mc-agent-oof <command> [args...]" >&2
+  exit 64
+fi
+
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+SCRIPT="$REPO_ROOT/plugins/mc-agent-oof/skills/mc-agent-oof/scripts/mc_agent_oof.py"
+
+if [ ! -f "$SCRIPT" ]; then
+  # Fallback for installed-script layouts (e.g., script symlinked into ~/.local/bin)
+  SCRIPT="${MC_AGENT_OOF_SCRIPT:-$SCRIPT}"
+fi
+
+STDERR_FILE="$(mktemp -t mc-agent-oof-stderr.XXXXXX)"
+trap 'rm -f "$STDERR_FILE"' EXIT
+
+# Run the user's command, tee stderr through to the user AND save a copy.
+# Use process substitution so we don't hide the user's output.
+"$@" 2> >(tee "$STDERR_FILE" >&2)
+EXIT=$?
+
+# Take the last 4KB of stderr for classification.
+STDERR_TAIL="$(tail -c 4096 "$STDERR_FILE" 2>/dev/null || true)"
+
+if command -v python3 >/dev/null 2>&1 && [ -f "$SCRIPT" ]; then
+  python3 "$SCRIPT" \
+    --exit-code "$EXIT" \
+    --command "$*" \
+    --stderr-tail "$STDERR_TAIL" \
+    --cwd "$PWD" \
+    >/dev/null 2>&1 &
+fi
+
+exit "$EXIT"

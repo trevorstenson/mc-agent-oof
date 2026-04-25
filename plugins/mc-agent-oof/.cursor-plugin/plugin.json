@@ -1,0 +1,14 @@
+{
+  "name": "mc-agent-oof",
+  "displayName": "mc-agent-oof",
+  "version": "0.1.0",
+  "description": "Minecraft hurt sounds when your build, lint, or test fails.",
+  "author": {
+    "name": "trevorstenson"
+  },
+  "license": "MIT",
+  "keywords": ["cursor-plugin", "skills", "build", "audio", "minecraft"],
+  "category": "developer-tools",
+  "tags": ["build", "audio", "minecraft", "fun"],
+  "skills": "./skills/"
+}

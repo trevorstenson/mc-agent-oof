@@ -1,0 +1,11 @@
+{
+  "name": "mc-agent-oof",
+  "description": "Minecraft hurt sounds when your build, lint, or test fails — and a level-up ding when it goes green.",
+  "version": "0.1.0",
+  "author": {
+    "name": "trevorstenson"
+  },
+  "license": "MIT",
+  "keywords": ["skills", "build", "audio", "minecraft", "hurt"],
+  "skills": "./skills/"
+}
