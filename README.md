@@ -2,8 +2,6 @@
 
 Minecraft hurt sounds when your build, lint, or test fails — automatically, no agent cooperation needed.
 
-Inspired by [`AndrewVos/endless-toil`](https://github.com/AndrewVos/endless-toil) and [`lorenzohess`'s comment](https://news.ycombinator.com/item?id=47888465) asking for a Minecraft-flavored version that fires on actual failures (build errors, segfaults, lint fails) instead of static-code heuristics.
-
 ## What it does
 
 Every Bash tool call your Claude Code agent runs gets classified by exit code + stderr; one of four Minecraft sounds plays:
@@ -17,12 +15,6 @@ Every Bash tool call your Claude Code agent runs gets classified by exit code + 
 | *silence* | success that wasn't a recovery | — |
 
 Sounds are **bit-identical to in-game Minecraft** — the script downloads the `.ogg` files on first run from Mojang's official asset CDN (`resources.download.minecraft.net`), the same one the Minecraft launcher uses. Nothing audio-related is bundled in this repo.
-
-## Why Claude Code only
-
-This plugin uses Claude Code's `PostToolUse` hook to react automatically — it fires on every Bash tool call without the agent having to know the plugin exists.
-
-Other agent CLIs (Codex, Cursor) only support skill-based activation, where the LLM has to remember to call a script after each command. That's not reliable enough — the agent can forget mid-session and the sounds stop. So those paths have been dropped intentionally. If those CLIs add real hook systems, support can come back.
 
 ## Install in Claude Code
 
