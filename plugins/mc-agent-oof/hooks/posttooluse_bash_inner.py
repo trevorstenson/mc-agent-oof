@@ -41,7 +41,7 @@ def main() -> int:
     command = inp.get("command", "") or ""
     cwd = event.get("cwd") or ""
 
-    script = Path(__file__).resolve().parents[1] / "skills" / "mc-agent-oof" / "scripts" / "mc_agent_oof.py"
+    script = Path(__file__).resolve().parents[1] / "scripts" / "mc_agent_oof.py"
     if not script.exists():
         return 0
 

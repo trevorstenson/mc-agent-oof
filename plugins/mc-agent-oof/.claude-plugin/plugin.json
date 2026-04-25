@@ -6,6 +6,5 @@
     "name": "trevorstenson"
   },
   "license": "MIT",
-  "keywords": ["skills", "build", "audio", "minecraft", "hurt"],
-  "skills": "./skills/"
+  "keywords": ["build", "audio", "minecraft", "hurt", "hooks"]
 }

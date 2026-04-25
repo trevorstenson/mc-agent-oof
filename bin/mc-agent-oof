@@ -16,7 +16,7 @@ if [ $# -eq 0 ]; then
 fi
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SCRIPT="$REPO_ROOT/plugins/mc-agent-oof/skills/mc-agent-oof/scripts/mc_agent_oof.py"
+SCRIPT="$REPO_ROOT/plugins/mc-agent-oof/scripts/mc_agent_oof.py"
 
 if [ ! -f "$SCRIPT" ]; then
   # Fallback for installed-script layouts (e.g., script symlinked into ~/.local/bin)

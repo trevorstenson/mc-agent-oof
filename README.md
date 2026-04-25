@@ -1,12 +1,12 @@
 # mc-agent-oof
 
-Minecraft hurt sounds when your build, lint, or test fails.
+Minecraft hurt sounds when your build, lint, or test fails — automatically, no agent cooperation needed.
 
-Inspired by [`AndrewVos/endless-toil`](https://github.com/AndrewVos/endless-toil) — a plugin that plays escalating groans while an agent reads code — and [`lorenzohess`'s comment](https://news.ycombinator.com/item?id=47888465) asking for a Minecraft-flavored version that fires on actual build failures, lint errors, and segfaults instead.
+Inspired by [`AndrewVos/endless-toil`](https://github.com/AndrewVos/endless-toil) and [`lorenzohess`'s comment](https://news.ycombinator.com/item?id=47888465) asking for a Minecraft-flavored version that fires on actual failures (build errors, segfaults, lint fails) instead of static-code heuristics.
 
 ## What it does
 
-After every shell command (or every Bash tool call your AI agent makes), mc-agent-oof classifies the result and plays one Minecraft sound:
+Every Bash tool call your Claude Code agent runs gets classified by exit code + stderr; one of four Minecraft sounds plays:
 
 | Tier | When | Sound |
 |---|---|---|
@@ -18,61 +18,36 @@ After every shell command (or every Bash tool call your AI agent makes), mc-agen
 
 Sounds are **bit-identical to in-game Minecraft** — the script downloads the `.ogg` files on first run from Mojang's official asset CDN (`resources.download.minecraft.net`), the same one the Minecraft launcher uses. Nothing audio-related is bundled in this repo.
 
-## Three ways to use it
+## Why Claude Code only
 
-### 1. Plugin (Codex / Claude Code / Cursor)
+This plugin uses Claude Code's `PostToolUse` hook to react automatically — it fires on every Bash tool call without the agent having to know the plugin exists.
 
-Mirrors endless-toil's install flow exactly.
+Other agent CLIs (Codex, Cursor) only support skill-based activation, where the LLM has to remember to call a script after each command. That's not reliable enough — the agent can forget mid-session and the sounds stop. So those paths have been dropped intentionally. If those CLIs add real hook systems, support can come back.
 
-#### Claude Code
+## Install in Claude Code
 
 ```bash
-git clone https://github.com/<you>/mc-agent-oof
-cd mc-agent-oof && claude
+git clone https://github.com/trevorstenson/mc-agent-oof
+cd mc-agent-oof
+claude
 ```
+
+Inside Claude Code:
 
 ```text
 /plugin marketplace add ./
 /plugin install mc-agent-oof@mc-agent-oof
 ```
 
-After install, every Bash tool call your agent runs is intercepted by a `PostToolUse` hook — sounds fire automatically without the agent having to remember.
-
-You can also invoke the bundled skill explicitly:
+`/exit` and re-launch `claude` so the hook registers. Verify:
 
 ```text
-/mc-agent-oof
+/hooks
 ```
 
-#### Codex CLI
+You should see `PostToolUse → Bash → mc-agent-oof/posttooluse-bash.sh`. From this point on, every failing command Claude runs makes a sound. The agent doesn't see the hook fire and won't comment on it.
 
-```bash
-codex plugin marketplace add ./
-```
-
-```text
-/plugins
-```
-
-Choose `mc-agent-oof`, install, restart Codex if needed, then ask Codex to use it:
-
-```text
-Use $mc-agent-oof while running my build commands.
-```
-
-#### Codex Desktop
-
-Open this directory in Codex Desktop, go to **Plugins**, find `mc-agent-oof`, click **Add to Codex**, and ask Codex to use it from a new thread.
-
-#### Cursor
-
-Add this folder as a local Cursor plugin marketplace, install `mc-agent-oof`, then:
-
-```text
-Use mc-agent-oof while running my builds.
-```
-
-### 2. Shell wrapper (no agent needed)
+## Use without an agent (shell wrapper)
 
 ```bash
 bin/mc-agent-oof npm test
@@ -82,27 +57,18 @@ bin/mc-agent-oof sh -c './configure && make'
 
 Pass-through: stdin/stdout/stderr behave exactly as if you'd run the command directly. The wrapper just listens to the exit code + stderr tail and reacts.
 
-Symlink it onto your `PATH` if you want it everywhere:
+Symlink onto your `PATH`:
 
 ```bash
 ln -s "$(pwd)/bin/mc-agent-oof" ~/.local/bin/mc-agent-oof
 ```
 
-### 3. Direct script
-
-```bash
-python3 plugins/mc-agent-oof/skills/mc-agent-oof/scripts/mc_agent_oof.py \
-    --exit-code 1 \
-    --command "npm test" \
-    --stderr-tail "FAIL: 3 errors"
-```
-
 ## Test the sounds
 
 ```bash
-python3 plugins/mc-agent-oof/skills/mc-agent-oof/scripts/fetch_sounds.py
-python3 plugins/mc-agent-oof/skills/mc-agent-oof/scripts/test_sounds.py --list
-python3 plugins/mc-agent-oof/skills/mc-agent-oof/scripts/test_sounds.py hurt explode anvil levelup
+python3 plugins/mc-agent-oof/scripts/fetch_sounds.py
+python3 plugins/mc-agent-oof/scripts/test_sounds.py --list
+python3 plugins/mc-agent-oof/scripts/test_sounds.py hurt explode anvil levelup
 ```
 
 ## Requirements
@@ -124,8 +90,6 @@ anvil_land.ogg                            # for `anvil`
 levelup.ogg                               # for `levelup`
 ```
 
-Want the actual `.ogg`s straight from your Minecraft install? They live at `~/Library/Application Support/minecraft/assets/objects/<hash>` (macOS) or `~/.minecraft/assets/objects/<hash>` (Linux), but the cache mc-agent-oof populates already pulls them from Mojang's CDN — so unless you want a different version's audio, you don't need to bother.
-
 ## How it classifies
 
 Highest priority first; first match wins.
@@ -134,19 +98,20 @@ Highest priority first; first match wins.
 |---|---|
 | `Segmentation fault`, `core dumped`, `panicked at`, `OutOfMemoryError`, `SIGSEGV`, `Aborted` | anvil |
 | Exit code 134 / 138 / 139 | anvil |
-| `error:`, `FAILED`, `fatal:`, `compilation error`, `cannot find module`, `SyntaxError` | explode |
+| `error:`, `error TS\d+`, `error[E\d+]`, `: error`, `FAILED`, `fatal:`, `compilation error`, `cannot find module`, `SyntaxError` | explode |
 | Any other non-zero exit | hurt |
 | Exit 0, but the previous run for this `cwd:tool` failed | levelup |
 | Exit 0 (no prior failure) | silence |
 
 This is heuristic. False positives happen — a test that asserts on the literal string `"Segmentation fault"` will fire `anvil`. That's part of the joke. Don't take the tier as proof of anything.
 
-Triumph (`levelup`) is gated on the command starting with a build-ish name (`make|cargo|npm|pnpm|yarn|bun|go|gradle|mvn|pytest|jest|vitest|tsc|eslint|...`). Running `cd /tmp` after a failed `npm test` won't fire the ding.
+Triumph (`levelup`) is gated on the command starting with a build-ish first word (`make|cargo|npm|pnpm|yarn|bun|go|gradle|mvn|pytest|jest|vitest|tsc|eslint|python3|...`). State is keyed by `cwd + first-word-of-command`, so `npm test` and `npm install` share a key (any npm success after an npm failure fires the ding), but `npm` and `cargo` are independent.
 
 ## Limitations
 
+- **Claude Code only.** Codex and Cursor agents are not supported because they don't expose programmatic post-tool-use hooks.
 - **macOS / Linux only.** Windows users: PRs welcome.
-- **Heuristic classification.** The `error:` pattern matches innocuous "error: 0 issues found" output too. Acceptable cost for the joke.
+- **Heuristic classification.** Acceptable cost for the joke.
 - **The shell wrapper uses `bash` process substitution.** Plain POSIX `sh` won't run it.
 
 ## License
@@ -155,8 +120,6 @@ MIT for the plugin code. The Minecraft sound files themselves are © Mojang/Micr
 
 ## Source
 
-Plugin layout follows endless-toil's structure and the OpenAI Codex / Claude Code plugin docs:
+Plugin layout follows the Claude Code plugin docs:
 
-- https://developers.openai.com/codex/plugins
 - https://code.claude.com/docs/en/plugins
-- https://github.com/cursor/plugins
