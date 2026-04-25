@@ -195,8 +195,10 @@ def save_state(state: dict) -> None:
 
 
 def state_key(cwd: str, command: str) -> str:
-    # Group by cwd + first arg (the tool). `npm test` and `npm run lint` track
-    # independently from `cargo build`.
+    # Coarse key: cwd + first word only. `npm test` and `npm install` share a
+    # key (both → cwd::npm), so any npm success after an npm failure fires
+    # triumph — even a different subcommand. Tradeoff: false-positive dings,
+    # but matches the "I was working with X, now it works" vibe.
     head = command.strip().split()[:1]
     return f"{cwd}::{head[0] if head else ''}"
 
